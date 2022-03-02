@@ -36,7 +36,8 @@ RUN apt-get update && apt-get full-upgrade -y && apt install -y \
     build-essential  \
     && chmod a+x /tmp/*.sh \
     && cp -rf /tmp/*.sh /usr/bin/ \
-    && wget https://mirrors.estointernet.in/apache/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -O /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
+    # && wget https://mirrors.estointernet.in/apache/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -O /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
+    && wget https://dlcdn.apache.org/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -O /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
     && tar xfz /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C /opt \
     && rm /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
     && ln -s /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} ${KAFKA_HOME} 
