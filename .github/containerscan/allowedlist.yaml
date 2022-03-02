@@ -1,0 +1,11 @@
+general:
+  vulnerabilities:
+    - CVE-2019-17571
+    - CVE-2022-23305
+    - CVE-2022-23307
+    - CVE-2022-23302
+  bestPracticeViolations:
+    - CIS-DI-0005
+    - DKL-LI-0003
+    - CIS-DI-0006
+    - DKL-DI-0006
