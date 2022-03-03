@@ -69,5 +69,9 @@ COPY /server.properties $KAFKA_HOME/config/server.properties
 # ADD supervisor/kafka.conf supervisor/zookeeper.conf /etc/supervisor/conf.d/
 # 2181 is zookeeper, 9092 is kafka
 EXPOSE 2181 9092
+
+COPY overrides /opt/overrides
+
+VOLUME ["/kafka"]
 # CMD ["supervisord", "-n"]
 ENTRYPOINT ["/sbin/tini", "--", "/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
