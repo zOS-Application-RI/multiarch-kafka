@@ -1,6 +1,6 @@
 FROM eclipse-temurin:11
 
-ARG kafka_version=3.1.0
+ARG kafka_version=3.5.0
 ARG scala_version=2.13
 ARG glibc_version=2.31-r0
 ARG vcs_ref=unspecified
