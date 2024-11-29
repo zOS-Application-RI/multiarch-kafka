@@ -30,10 +30,16 @@ RUN apt-get update && apt-get full-upgrade -y && apt install -y \
     supervisor \
     curl \
     jq \
-    docker \
+    # docker \
     wget \
     make \
     build-essential  \
+    && 	curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg ; \
+	echo \
+  		"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+  		$(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null ; \
+    apt-get update ; \
+    apt-get install -y --no-install-recommends docker-ce-cli ; \
     && chmod a+x /tmp/*.sh \
     && cp -rf /tmp/*.sh /usr/bin/ \
     # && wget https://mirrors.estointernet.in/apache/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -O /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
