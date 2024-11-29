@@ -1,4 +1,5 @@
-FROM eclipse-temurin:11
+# FROM eclipse-temurin:11
+FROM ibm-semeru-runtimes:open-11-jre-jammy
 
 ARG kafka_version=3.9.0
 ARG scala_version=2.13
