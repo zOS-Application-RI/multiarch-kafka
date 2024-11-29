@@ -20,65 +20,45 @@ LABEL org.label-schema.name="kafka" \
 
 ENV KAFKA_VERSION=$kafka_version \
     SCALA_VERSION=$scala_version \
-    # ZOOKEEPER_VERSION=${zookeeper_version} \
-    KAFKA_HOME=/opt/kafka \
-    GLIBC_VERSION=$glibc_version \
-    PATH=${PATH}:${KAFKA_HOME}/bin
+    KAFKA_HOME=/opt/kafka
 
-ADD /*.sh /tmp/
-USER root
-RUN apt-get update && apt-get full-upgrade -y && apt install -y \
-    supervisor \
-    curl \
-    jq \
-    # docker \
-    wget \
-    make \
-    build-essential;  \
-     	curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg ; \
-	echo \
-  		"deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
-  		$(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null ; \
+ENV PATH=${PATH}:${KAFKA_HOME}/bin
+
+COPY download-kafka.sh start-kafka.sh broker-list.sh create-topics.sh versions.sh /tmp2/
+
+RUN set -eux ; \
+    apt-get update ; \
+    apt-get upgrade -y ; \
+    apt-get install -y --no-install-recommends jq net-tools curl wget ; \
+### BEGIN docker for CI tests
+    apt-get install -y --no-install-recommends gnupg lsb-release ; \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg ; \
+    echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
+        $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null ; \
     apt-get update ; \
     apt-get install -y --no-install-recommends docker-ce-cli ; \
-    chmod a+x /tmp/*.sh \
-    && cp -rf /tmp/*.sh /usr/bin/ \
-    # && wget https://mirrors.estointernet.in/apache/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -O /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
-    && wget https://dlcdn.apache.org/kafka/${KAFKA_VERSION}/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -O /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
-    && tar xfz /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C /opt \
-    && rm /tmp/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz \
-    && ln -s /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} ${KAFKA_HOME} 
-    
-# Use tini as subreaper in Docker container to adopt zombie processes
-ARG TINI_VERSION=v0.19.0
-COPY tini_pub.gpg ${KAFKA_HOME}/tini_pub.gpg
-RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-$(dpkg --print-architecture) -o /sbin/tini \
-    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-$(dpkg --print-architecture).asc -o /sbin/tini.asc \
-    && gpg --no-tty --import ${KAFKA_HOME}/tini_pub.gpg \
-    && gpg --verify /sbin/tini.asc \
-    && rm -rf /sbin/tini.asc /root/.gnupg \
-    && chmod +x /sbin/tini
-COPY tini-shim.sh /bin/tini
-RUN chmod +x /bin/tini
-
-COPY /supervisor/supervisord.conf /etc/supervisord.conf
-RUN chmod 777 /etc/supervisord.conf
-RUN mkdir -p /var/log/supervisord \
-    && chmod a+w /var/log/supervisord/ \
-    && mkdir -p /opt/kafka/logs \
-    && chmod a+w /opt/kafka/logs
-
-
-COPY /server.properties $KAFKA_HOME/config/server.properties
-# VOLUME ["/kafka"]
-#ADD scripts/start-kafka.sh /usr/bin/start-kafka.sh
-# Supervisor config
-# ADD supervisor/kafka.conf supervisor/zookeeper.conf /etc/supervisor/conf.d/
-# 2181 is zookeeper, 9092 is kafka
-EXPOSE 2181 9092
+    apt remove -y gnupg lsb-release ; \
+    apt clean ; \
+    apt autoremove -y ; \
+    apt -f install ; \
+### END docker for CI tests
+### BEGIN other for CI tests
+    apt-get install -y --no-install-recommends netcat ; \
+### END other for CI tests
+    chmod a+x /tmp2/*.sh ; \
+    mv /tmp2/start-kafka.sh /tmp2/broker-list.sh /tmp2/create-topics.sh /tmp2/versions.sh /usr/bin ; \
+    sync ; \
+    /tmp2/download-kafka.sh ; \
+    tar xfz /tmp2/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz -C /opt ; \
+    rm /tmp2/kafka_${SCALA_VERSION}-${KAFKA_VERSION}.tgz ; \
+    ln -s /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION} ${KAFKA_HOME} ; \
+    rm -rf /tmp2 ; \
+    rm -rf /var/lib/apt/lists/*
 
 COPY overrides /opt/overrides
 
 VOLUME ["/kafka"]
-# CMD ["supervisord", "-n"]
-ENTRYPOINT ["/sbin/tini", "--", "/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+
+# Use "exec" form so that it runs as PID 1 (useful for graceful shutdown)
+CMD ["start-kafka.sh"]
