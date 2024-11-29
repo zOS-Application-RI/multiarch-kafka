@@ -95,14 +95,14 @@ jobs:
       #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
       #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # - name: Run Snyk to check Docker image for vulnerabilities
-      #   continue-on-error: true
-      #   uses: snyk/actions/docker@master
-      #   env:
-      #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      #   with:
-      #     image: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ github.event.repository.name }}
-      #     args: --file=Dockerfile
+      - name: Run Snyk to check Docker image for vulnerabilities
+        continue-on-error: true
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ secrets.DOCKER_HUB_USERNAME }}/${{ github.event.repository.name }}
+          args: --file=Dockerfile
 
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
